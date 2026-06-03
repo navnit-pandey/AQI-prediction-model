@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AirQ Predict — AI-Powered Air Quality Forecasting</title>
+    <meta name="description" content="Get real-time AQI data and AI-powered 5-day air quality predictions for any city worldwide. Built with machine learning." />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+    </div>
+    <div class="bg-grid"></div>
+
+    <!-- Error Toast -->
+    <div id="error-toast" class="error-toast"></div>
+
+    <div class="app-container">
+
+        <!-- Hero Section -->
+        <header class="hero">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                Powered by Machine Learning
+            </div>
+            <h1><span class="gradient-text">AirQ Predict</span></h1>
+            <p>Enter any city to get real-time AQI data and AI-powered air quality predictions for the next 5 days.</p>
+        </header>
+
+        <!-- Search -->
+        <section class="search-section">
+            <div class="search-card">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                    type="text"
+                    id="city-input"
+                    placeholder="Search any city… e.g. Delhi, Tokyo, London"
+                    autocomplete="off"
+                />
+                <button id="search-btn" class="search-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                    <span>Predict</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Loading -->
+        <div id="loading" class="loading-container">
+            <div class="loader"></div>
+            <div class="loading-text">
+                Fetching AQI data & training model<span>.</span><span>.</span><span>.</span>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <section id="results" class="results-section">
+
+            <!-- City Header -->
+            <div class="city-header">
+                <h2 id="city-name"></h2>
+                <div class="coords" id="city-coords"></div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-label">Today's AQI</div>
+                    <div class="stat-value" id="stat-current-value">—</div>
+                    <div class="stat-sub" id="stat-current-sub"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">11-Day Average</div>
+                    <div class="stat-value" id="stat-avg-history">—</div>
+                    <div class="stat-sub" id="stat-avg-history-sub"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">5-Day Forecast Avg</div>
+                    <div class="stat-value" id="stat-avg-forecast">—</div>
+                    <div class="stat-sub" id="stat-avg-forecast-sub"></div>
+                </div>
+            </div>
+
+            <!-- Gauge -->
+            <div class="gauge-section">
+                <div class="gauge-card">
+                    <div class="gauge-wrapper">
+                        <div class="gauge-ring" id="gauge-ring">
+                            <div class="gauge-inner">
+                                <div class="gauge-value" id="gauge-aqi-value">0</div>
+                                <div class="gauge-label">AQI</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gauge-category" id="gauge-category">—</div>
+                    <div class="gauge-subtitle">Current Air Quality Index</div>
+                </div>
+            </div>
+
+            <!-- 5-Day Forecast -->
+            <div class="forecast-section">
+                <h3 class="section-title"><span class="icon">🔮</span> 5-Day Forecast</h3>
+                <div class="forecast-grid" id="forecast-grid"></div>
+            </div>
+
+            <!-- Chart -->
+            <div class="chart-section">
+                <h3 class="section-title"><span class="icon">📈</span> AQI Trend</h3>
+                <div class="chart-card">
+                    <div style="position: relative; height: 380px;">
+                        <canvas id="aqi-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Metrics -->
+            <div>
+                <h3 class="section-title"><span class="icon">🧠</span> Model Performance</h3>
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-label">R² Score</div>
+                        <div class="metric-value" id="metric-r2">—</div>
+                        <div class="metric-desc">How well the model fits the data (closer to 1.0 is better)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Mean Absolute Error</div>
+                        <div class="metric-value" id="metric-mae">—</div>
+                        <div class="metric-desc">Average prediction error in AQI units (lower is better)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Table -->
+            <div class="history-section">
+                <h3 class="section-title"><span class="icon">📊</span> Historical Data</h3>
+                <div class="history-card">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>AQI</th>
+                                <th>Category</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer">
+                Data sourced from OpenWeatherMap · Model: Random Forest Regressor · Built with Flask & Chart.js
+            </footer>
+
+        </section>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+</html>
