@@ -34,6 +34,15 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+Set your OpenWeatherMap API key:
+
+```bash
+# Windows (PowerShell)
+$env:OPENWEATHER_API_KEY="your_api_key_here"
+# macOS/Linux
+export OPENWEATHER_API_KEY="your_api_key_here"
+```
+
 ### 2) Frontend setup
 From the repository root:
 
@@ -79,5 +88,5 @@ npm run build
 ```
 
 ## Notes
-- The backend currently contains a hardcoded OpenWeatherMap API key in `app.py`; remove it and use an environment variable (for example `OPENWEATHER_API_KEY`) instead.
+- The backend reads the OpenWeatherMap API key from `OPENWEATHER_API_KEY`.
 - No automated backend test suite is configured in this repository.

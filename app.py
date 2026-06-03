@@ -119,7 +119,7 @@ def get_us_aqi(pm2_5, pm10, co_ug, no2_ug, so2_ug, o3_ug):
 app = Flask(__name__, static_folder="static", static_url_path="")
 CORS(app)
 
-API_KEY = "c858e10f19d8ddef51725ae43cb42dd9"
+API_KEY = os.getenv("OPENWEATHER_API_KEY", "").strip()
 
 
 def get_aqi_category(aqi):
@@ -209,6 +209,8 @@ def predict():
 
     if not city:
         return jsonify({"error": "City name is required."}), 400
+    if not API_KEY:
+        return jsonify({"error": "Server misconfiguration: OPENWEATHER_API_KEY is not set."}), 500
 
     # Step 1: Geocode the city
     try:
@@ -419,6 +421,9 @@ METRO_CITIES = [
 @app.route("/api/metro-cities")
 def metro_cities():
     """Fetch current AQI, temperature, and humidity for Indian metro cities."""
+    if not API_KEY:
+        return jsonify({"error": "Server misconfiguration: OPENWEATHER_API_KEY is not set."}), 500
+
     results = []
 
     for city in METRO_CITIES:
