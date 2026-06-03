@@ -27,7 +27,7 @@ From the repository root:
 ```bash
 python -m venv .venv
 # Windows
-.venv\\Scripts\\activate
+.venv\Scripts\activate
 # macOS/Linux
 source .venv/bin/activate
 
@@ -79,5 +79,5 @@ npm run build
 ```
 
 ## Notes
-- The backend currently contains a hardcoded OpenWeatherMap API key in `app.py`.
+- The backend currently contains a hardcoded OpenWeatherMap API key in `app.py`; remove it and use an environment variable (for example `OPENWEATHER_API_KEY`) instead.
 - No automated backend test suite is configured in this repository.
