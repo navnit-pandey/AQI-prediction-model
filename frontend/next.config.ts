@@ -1,16 +1,18 @@
 import type { NextConfig } from "next";
 
+const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+
 const nextConfig: NextConfig = {
   /**
-   * Proxy /api/* requests to the Flask backend during development.
-   * This avoids CORS issues and keeps frontend/backend on separate ports.
-   * Flask runs on port 5000, Next.js on port 3000.
+   * Proxy /api/* requests to the Flask backend.
+   * Uses environment variable NEXT_PUBLIC_BACKEND_URL when deployed,
+   * otherwise defaults to localhost:5000 for local development.
    */
   async rewrites() {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:5000/api/:path*",
+        destination: `${NEXT_PUBLIC_BACKEND_URL}/api/:path*`,
       },
     ];
   },
