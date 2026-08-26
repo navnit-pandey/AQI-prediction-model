@@ -119,7 +119,17 @@ def get_us_aqi(pm2_5, pm10, co_ug, no2_ug, so2_ug, o3_ug):
 app = Flask(__name__, static_folder="static", static_url_path="")
 CORS(app)
 
-API_KEY = "c858e10f19d8ddef51725ae43cb42dd9"
+# Load environment variables from .env if present
+env_path = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(env_path):
+    with open(env_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+API_KEY = os.environ.get("OPENWEATHER_API_KEY", "")
 
 
 def get_aqi_category(aqi):
@@ -209,6 +219,9 @@ def predict():
 
     if not city:
         return jsonify({"error": "City name is required."}), 400
+
+    if not API_KEY:
+        return jsonify({"error": "OpenWeatherMap API key is not configured. Please set the OPENWEATHER_API_KEY environment variable in your backend settings."}), 500
 
     # Step 1: Geocode the city
     try:
