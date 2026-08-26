@@ -129,7 +129,7 @@ if os.path.exists(env_path):
                 k, v = line.split("=", 1)
                 os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
-API_KEY = os.environ.get("OPENWEATHER_API_KEY", "")
+API_KEY = os.environ.get("OPENWEATHER_API_KEY", "").strip()
 
 
 def get_aqi_category(aqi):
