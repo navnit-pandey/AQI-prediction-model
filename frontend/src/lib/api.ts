@@ -1,15 +1,8 @@
-import { PredictionResponse } from "@/types";
+import { MetroCitiesResponse, PredictionResponse } from "@/types";
 
-/**
- * Base URL for the Flask backend API.
- * In development, the Flask server runs on port 5000.
- * The Next.js dev server proxies requests via next.config.ts rewrites.
- */
 const API_BASE = "/api";
+const DEFAULT_TIMEOUT_MS = 25000;
 
-/**
- * Custom error class for API errors with status codes
- */
 export class ApiError extends Error {
   status: number;
 
@@ -20,20 +13,38 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Fetch AQI predictions for a given city.
- * Sends a POST request to the Flask backend /api/predict endpoint.
- *
- * @param city - Name of the city to predict AQI for
- * @returns Promise resolving to the prediction response data
- * @throws ApiError if the request fails or returns an error
- */
+function createAbortSignal(timeoutMs: number, externalSignal?: AbortSignal) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalSignal.addEventListener("abort", () => controller.abort(), {
+        once: true,
+      });
+    }
+  }
+
+  return {
+    signal: controller.signal,
+    cleanup: () => clearTimeout(timeoutId),
+  };
+}
+
 export async function fetchPrediction(
-  city: string
+  city: string,
+  options?: { signal?: AbortSignal; timeoutMs?: number }
 ): Promise<PredictionResponse> {
   if (!city.trim()) {
     throw new ApiError("City name is required.", 400);
   }
+
+  const { signal, cleanup } = createAbortSignal(
+    options?.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    options?.signal
+  );
 
   try {
     const response = await fetch(`${API_BASE}/predict`, {
@@ -42,6 +53,7 @@ export async function fetchPrediction(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ city: city.trim() }),
+      signal,
     });
 
     const data = await response.json();
@@ -55,15 +67,55 @@ export async function fetchPrediction(
 
     return data as PredictionResponse;
   } catch (error) {
-    // Re-throw ApiError instances as-is
     if (error instanceof ApiError) {
       throw error;
     }
 
-    // Handle network errors
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiError(
+        "The request timed out or was cancelled. Please try again.",
+        408
+      );
+    }
+
     throw new ApiError(
       "Failed to connect to the server. Please check if the backend is running.",
       503
     );
+  } finally {
+    cleanup();
+  }
+}
+
+export async function fetchMetroCities(
+  options?: { signal?: AbortSignal; timeoutMs?: number }
+): Promise<MetroCitiesResponse> {
+  const { signal, cleanup } = createAbortSignal(
+    options?.timeoutMs ?? 12000,
+    options?.signal
+  );
+
+  try {
+    const response = await fetch(`${API_BASE}/metro-cities`, { signal });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new ApiError(
+        data.error || "Unable to fetch metro city data.",
+        response.status
+      );
+    }
+
+    return data as MetroCitiesResponse;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiError("Metro city request timed out.", 408);
+    }
+    throw new ApiError("Failed to fetch metro city data.", 503);
+  } finally {
+    cleanup();
   }
 }

@@ -277,6 +277,9 @@ export default function AqiBarChart({ history, predictions, fullHistory }: AqiBa
       </div>
 
       <div className="glass-card" style={{ borderRadius: "24px", padding: "32px" }}>
+        <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "12px" }}>
+          Bar height and labels represent AQI values; colors are supplemented by min/max badges above.
+        </p>
         {/* Scroll hint */}
         {chartHistory.length > 30 && (
           <div
@@ -322,6 +325,8 @@ export default function AqiBarChart({ history, predictions, fullHistory }: AqiBa
           >
             <canvas
               ref={canvasRef}
+              role="img"
+              aria-label="Daily AQI bar chart comparing historical and forecast AQI values"
               width={chartWidth}
               height={340}
             />

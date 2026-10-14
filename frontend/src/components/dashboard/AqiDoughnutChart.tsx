@@ -20,6 +20,7 @@ export default function AqiDoughnutChart({ history, fullHistory }: AqiDoughnutCh
 
   // Use full 365-day history for distribution
   const chartHistory = fullHistory.length > 0 ? fullHistory : history;
+  const estimatedDays = chartHistory.filter((point) => point.estimated).length;
 
   useEffect(() => {
     let mounted = true;
@@ -149,8 +150,11 @@ export default function AqiDoughnutChart({ history, fullHistory }: AqiDoughnutCh
       >
         AQI Category Distribution
       </h4>
+      <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center", marginBottom: "10px" }}>
+        Shows day-count distribution by AQI category{estimatedDays > 0 ? ` (${estimatedDays} estimated day(s) included)` : ""}.
+      </p>
       <div style={{ position: "relative", height: "280px" }}>
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} role="img" aria-label="AQI category distribution doughnut chart" />
       </div>
     </div>
   );

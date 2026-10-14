@@ -20,6 +20,12 @@ export default function AqiPolarChart({ history, fullHistory }: AqiAreaChartProp
 
   // Use full 365-day history for statistics
   const chartHistory = fullHistory.length > 0 ? fullHistory : history;
+  const values = chartHistory.map((h) => h.aqi);
+  const minValue = values.length ? Math.round(Math.min(...values)) : 0;
+  const maxValue = values.length ? Math.round(Math.max(...values)) : 0;
+  const avgValue = values.length
+    ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
+    : 0;
 
   useEffect(() => {
     let mounted = true;
@@ -131,8 +137,12 @@ export default function AqiPolarChart({ history, fullHistory }: AqiAreaChartProp
       >
         AQI Statistics Overview
       </h4>
+      <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center", marginBottom: "10px" }}>
+        Current, average, max, min, and range values. Summary: avg {avgValue},
+        min {minValue}, max {maxValue}.
+      </p>
       <div style={{ position: "relative", height: "280px" }}>
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} role="img" aria-label="AQI statistics polar area chart" />
       </div>
     </div>
   );

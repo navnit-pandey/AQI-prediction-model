@@ -7,39 +7,32 @@ interface SearchBarProps {
   isLoading: boolean;
 }
 
-/**
- * Search bar component for city input.
- * Features a glassmorphism pill design with search icon and gradient submit button.
- * Supports Enter key to submit and handles validation.
- */
 export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = () => {
+  const handleSubmit = (event?: React.FormEvent) => {
+    event?.preventDefault();
     const trimmed = value.trim();
     if (trimmed && !isLoading) {
       onSearch(trimmed);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSubmit();
-    }
-  };
-
   return (
     <section
       id="search-section"
+      aria-label="Search AQI by city"
       style={{
         display: "flex",
         justifyContent: "center",
         marginBottom: "60px",
       }}
     >
-      <div
+      <form
         className="glass-card"
+        onSubmit={handleSubmit}
+        aria-busy={isLoading}
         style={{
           display: "flex",
           alignItems: "center",
@@ -51,12 +44,9 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
           boxShadow: "var(--shadow-glow-blue)",
           transform: "none",
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "none";
-        }}
       >
-        {/* Search icon */}
         <svg
+          aria-hidden="true"
           style={{
             color: "var(--text-muted)",
             flexShrink: 0,
@@ -74,17 +64,21 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
 
-        {/* Input field */}
+        <label htmlFor="city-input" className="sr-only">
+          City name
+        </label>
         <input
           ref={inputRef}
           id="city-input"
+          name="city"
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
           placeholder="Search any city… e.g. Delhi, Tokyo, London"
           autoComplete="off"
           disabled={isLoading}
+          aria-disabled={isLoading}
+          maxLength={80}
           style={{
             flex: 1,
             background: "none",
@@ -98,11 +92,11 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
           }}
         />
 
-        {/* Submit button */}
         <button
           id="search-btn"
-          onClick={handleSubmit}
+          type="submit"
           disabled={isLoading || !value.trim()}
+          aria-disabled={isLoading || !value.trim()}
           style={{
             flexShrink: 0,
             display: "flex",
@@ -120,19 +114,9 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
             transition: "all 0.3s ease",
             opacity: isLoading || !value.trim() ? 0.6 : 1,
           }}
-          onMouseEnter={(e) => {
-            if (!isLoading && value.trim()) {
-              e.currentTarget.style.transform = "scale(1.03)";
-              e.currentTarget.style.boxShadow =
-                "0 8px 30px rgba(79, 140, 255, 0.3)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "none";
-          }}
         >
           <svg
+            aria-hidden="true"
             width="18"
             height="18"
             viewBox="0 0 24 24"
@@ -147,7 +131,7 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
           </svg>
           <span>{isLoading ? "Predicting…" : "Predict"}</span>
         </button>
-      </div>
+      </form>
     </section>
   );
 }

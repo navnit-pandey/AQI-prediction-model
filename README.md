@@ -1,165 +1,126 @@
-# 🌿 AirQ Predict — Real-Time Air Quality & AQI Forecasting System
+# AirQ Predict
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.2-blue?style=flat&logo=react)](https://reactjs.org/)
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org/)
-[![Flask](https://img.shields.io/badge/Flask-3.x-lightgrey?style=flat&logo=flask)](https://flask.palletsprojects.com/)
-[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-orange?style=flat&logo=scikit-learn)](https://scikit-learn.org/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
-[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat&logo=vercel)](https://vercel.com)
-[![Render](https://img.shields.io/badge/Deployed-Render-46E3B7?style=flat&logo=render)](https://render.com)
+Production-hardened AQI dashboard with a **Next.js frontend (`frontend/`)** and a **Flask API backend (`app.py`, `backend/`)**.
 
-**AirQ Predict** is a full-stack, machine learning-powered web application that delivers real-time air quality index (AQI) analysis, pollutant level breakdown, and future 7-day predictive forecasting for any city globally.
+## Architecture
 
----
+- `frontend/`: canonical UI (Next.js App Router + TypeScript)
+- `backend/`: Flask API modules (config, routes, OpenWeather client, AQI domain logic, forecasting, validation/cache)
+- Flask now runs as **API-only** (`/api/*`, `/healthz`)
 
-## 🚀 Live Demo & Repository
+## API Endpoints
 
-- **🌐 Live Web App:** [AirQ Predict on Vercel](https://vercel.com/navnit-s-project/aqi-prediction-model)
-- **⚙️ Backend API:** `https://aqi-prediction-model-1.onrender.com`
-- **💻 GitHub Repo:** [navnit-pandey/AQI-prediction-model](https://github.com/navnit-pandey/AQI-prediction-model)
+- `POST /api/predict`
+- `GET /api/metro-cities`
+- `GET /healthz`
 
----
+## Environment Variables
 
-## ✨ Key Features
+Copy `.env.example` to `.env` and set values.
 
-- 🌍 **Global City Search & Geocoding**: Search for any city worldwide using OpenWeather Geocoding API.
-- 🧪 **Comprehensive Pollutant Tracking**: Real-time measurement of **PM2.5, PM10, CO, NO2, SO2, and O3**.
-- 📐 **US EPA Standard AQI Calculation**: Precise breakpoint calculation adhering to official US EPA AQI guidelines.
-- 🤖 **Multi-Model Machine Learning Ensemble**:
-  - **Random Forest Regressor**
-  - **Gradient Boosting Regressor**
-  - **Extra Trees Regressor**
-  - **Ridge Regression**
-  - Live model performance evaluation metrics: **R² Score** and **Mean Absolute Error (MAE)**.
-- 📈 **7-Day AQI Forecast**: Future air quality trajectory predicted using historical trends and ML regressors.
-- 📊 **Interactive Data Visualizations**: Smooth, responsive charts powered by **Chart.js** & modern glassmorphism UI.
-- 🛡️ **Health Recommendations**: Tailored health precautions and safety guidance according to AQI severity tiers.
+Required:
+- `OPENWEATHER_API_KEY`
 
----
+Important optional settings:
+- `CORS_ALLOWED_ORIGINS` (comma-separated)
+- `RATE_LIMIT_PER_MINUTE`
+- `OPENWEATHER_TIMEOUT_SECONDS`
+- `PREDICTION_CACHE_TTL_SECONDS`, `METRO_CACHE_TTL_SECONDS`, `HISTORY_CACHE_TTL_SECONDS`
+- `FLASK_HOST`, `FLASK_PORT`, `FLASK_DEBUG`
+- `NEXT_PUBLIC_BACKEND_URL`
 
-## 🏗️ Architecture Overview
+## Local Development
 
-```mermaid
-graph TD
-    A[Client Browser] -->|Requests / Search| B[Next.js Frontend]
-    B -->|Proxy /api/predict| C[Flask Backend API]
-    C -->|Fetch Weather & History| D[OpenWeatherMap API]
-    C -->|Train & Predict| E[Scikit-Learn ML Models]
-    E -->|Predictions & Metrics| C
-    C -->|JSON Response| B
-    B -->|Render UI & Charts| A
-```
+### Backend
 
----
-
-## 🛠️ Tech Stack
-
-### **Frontend**
-- **Framework:** [Next.js 16 (App Router)](https://nextjs.org/) with React 19 & TypeScript
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) with Lucide Icons
-- **Visualizations:** [Chart.js](https://www.chartjs.org/) & React-Chartjs-2
-- **Deployment:** [Vercel](https://vercel.com/)
-
-### **Backend & Machine Learning**
-- **API Framework:** [Flask](https://flask.palletsprojects.com/) + Flask-CORS + Gunicorn
-- **Machine Learning:** [Scikit-Learn](https://scikit-learn.org/) (Ensemble Regressors, Ridge) & NumPy
-- **External Data:** OpenWeatherMap Air Pollution API (Historical & Real-Time)
-- **Deployment:** [Render](https://render.com/)
-
----
-
-## 💻 Local Setup & Installation
-
-### Prerequisites
-- **Python 3.10+**
-- **Node.js 18+** & `npm`
-- **Git**
-
-### 1. Clone the repository
 ```bash
-git clone https://github.com/navnit-pandey/AQI-prediction-model.git
-cd AQI-prediction-model
-```
-
-### 2. One-Click Launch (Windows)
-Simply run the included batch launcher:
-```cmd
-start-app.bat
-```
-*This starts both the Flask backend on port `5000` and the Next.js frontend on port `3000`, then automatically opens your browser.*
-
----
-
-### 3. Manual Launch
-
-#### Backend Setup (Terminal 1)
-```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
 ```
-*Backend runs on `http://localhost:5000`.*
 
-#### Frontend Setup (Terminal 2)
-```powershell
+Backend runs on `http://localhost:5000` by default.
+
+### Frontend
+
+```bash
 cd frontend
 npm install
 npm run dev
 ```
-*Frontend runs on `http://localhost:3000`.*
 
----
+Frontend runs on `http://localhost:3000`.
 
-## 📡 API Reference
+## Production Commands
 
-### `POST /api/predict`
-Calculates real-time AQI, runs 4 ML regression models on 365 days of historical data, and outputs 7-day future predictions.
-
-**Request Body:**
-```json
-{
-  "city": "Delhi"
-}
+Backend (example):
+```bash
+gunicorn app:app --bind 0.0.0.0:5000
 ```
 
-**Response Format (Sample):**
-```json
-{
-  "city": "Delhi",
-  "country": "IN",
-  "lat": 28.6139,
-  "lon": 77.209,
-  "current_aqi": 184,
-  "category": "Unhealthy",
-  "pollutants": {
-    "pm2_5": 118.4,
-    "pm10": 195.2,
-    "co": 1200.0,
-    "no2": 45.3,
-    "so2": 15.6,
-    "o3": 32.1
-  },
-  "models_evaluation": {
-    "Random Forest": { "r2": 0.88, "mae": 12.4 },
-    "Gradient Boosting": { "r2": 0.89, "mae": 11.8 },
-    "Extra Trees": { "r2": 0.87, "mae": 13.1 },
-    "Ridge": { "r2": 0.76, "mae": 18.2 }
-  },
-  "best_model": "Gradient Boosting",
-  "forecast_7_days": [180, 175, 169, 172, 178, 185, 190]
-}
+Frontend:
+```bash
+cd frontend
+npm run build
+npm run start
 ```
 
----
+## API Response Contract (Predict)
 
-## 👤 Author
+`POST /api/predict` body:
 
-**Navnit Pandey**
-- GitHub: [@navnit-pandey](https://github.com/navnit-pandey)
+```json
+{ "city": "Delhi" }
+```
 
----
+Response fields include:
+- `status`: `ok | partial | unavailable`
+- `history` and `full_history` (each point may include `estimated: true` when interpolated)
+- `predictions` (5-day forecast)
+- `model_metrics` (`validation_method` uses chronological holdout, includes baseline MAE)
+- `data_quality` (observed/interpolated/coverage and notes)
 
-## 📄 License
-This project is open-source and available under the [MIT License](LICENSE).
+If observed data is insufficient, API returns a safe `503` error with no provider secrets.
+
+## Reliability and Security Hardening
+
+- HTTPS upstream calls to OpenWeather with request timeouts
+- Input validation for JSON payloads and city constraints
+- Structured error handling/logging (no broad silent exceptions)
+- Configurable CORS allowlist (safe local defaults)
+- Lightweight in-memory rate limiting
+- In-memory TTL caching for geocoding, historical fetches, metro snapshots, and prediction responses
+
+## Testing and Verification
+
+### Frontend
+```bash
+cd frontend
+npm run lint
+npm run typecheck
+npm run build
+```
+
+### Backend
+```bash
+python -m compileall backend app.py
+python -m unittest discover -s tests -p 'test_*.py'
+```
+
+## CI
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs:
+- Frontend install + lint + typecheck + build
+- Backend install + compile + tests
+- `pip-audit` dependency vulnerability scan
+
+## Operational Notes
+
+- Logs are emitted to stdout/stderr via Python logging for platform collection.
+- `GET /healthz` is provided for health checks.
+- Caches and rate limiting are in-memory (single-process scope); for horizontal scaling, replace with shared cache/rate-limit infrastructure.
+
+## Guidance Disclaimer
+
+Health suggestions in the UI are general informational guidance and not a substitute for professional medical advice.

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useRef, useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { PredictionResponse } from "@/types";
 import { fetchPrediction, ApiError } from "@/lib/api";
 import { useToast } from "@/context/ToastContext";
 
-// Components
 import SearchBar from "@/components/dashboard/SearchBar";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import EmptyState from "@/components/ui/EmptyState";
@@ -16,9 +16,6 @@ import AqiMiniStats from "@/components/dashboard/AqiMiniStats";
 import CityCompare from "@/components/dashboard/CityCompare";
 import ForecastGrid from "@/components/dashboard/ForecastGrid";
 import AqiChart from "@/components/dashboard/AqiChart";
-import AqiBarChart from "@/components/dashboard/AqiBarChart";
-import AqiDoughnutChart from "@/components/dashboard/AqiDoughnutChart";
-import AqiPolarChart from "@/components/dashboard/AqiPolarChart";
 import HealthSuggestions from "@/components/dashboard/HealthSuggestions";
 import ModelMetrics from "@/components/dashboard/ModelMetrics";
 import HistoryTable from "@/components/dashboard/HistoryTable";
@@ -27,47 +24,58 @@ import SavedCities from "@/components/dashboard/SavedCities";
 import MetroCities from "@/components/dashboard/MetroCities";
 import Footer from "@/components/layout/Footer";
 
-/**
- * Main dashboard page.
- * Orchestrates the entire AQI prediction flow:
- * search → loading → results display with all dashboard widgets.
- */
+const AqiBarChart = dynamic(() => import("@/components/dashboard/AqiBarChart"), {
+  loading: () => <LoadingSpinner message="Loading AQI comparison chart" />,
+});
+const AqiDoughnutChart = dynamic(
+  () => import("@/components/dashboard/AqiDoughnutChart"),
+  { loading: () => <LoadingSpinner message="Loading AQI category chart" /> }
+);
+const AqiPolarChart = dynamic(() => import("@/components/dashboard/AqiPolarChart"), {
+  loading: () => <LoadingSpinner message="Loading AQI seasonal chart" />,
+});
+
 export default function HomePage() {
   const [data, setData] = useState<PredictionResponse | null>(null);
   const [previousData, setPreviousData] = useState<PredictionResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const { addToast } = useToast();
 
-  /**
-   * Handle city search.
-   * Stores the previous result for city comparison.
-   */
   const handleSearch = useCallback(
     async (city: string) => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       setIsLoading(true);
       setError(null);
 
-      // Save current data as previous for comparison
       if (data) {
         setPreviousData(data);
       }
       setData(null);
 
       try {
-        const result = await fetchPrediction(city);
+        const result = await fetchPrediction(city, {
+          signal: controller.signal,
+          timeoutMs: 25000,
+        });
         setData(result);
-        setLastUpdated(new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }));
-        addToast(
-          "success",
-          `AQI predictions loaded for ${result.city}, ${result.country}`
+        setLastUpdated(
+          new Date().toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })
         );
+        addToast("success", `AQI predictions loaded for ${result.city}, ${result.country}`);
       } catch (err) {
+        if (controller.signal.aborted) {
+          return;
+        }
         const message =
           err instanceof ApiError
             ? err.message
@@ -75,32 +83,19 @@ export default function HomePage() {
         setError(message);
         addToast("error", message);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     },
     [addToast, data]
   );
 
-  // Compute latest AQI for components
   const latestAqi = data?.history[data.history.length - 1];
 
   return (
-    <div
-      style={{
-        maxWidth: "1200px",
-        margin: "0 auto",
-        padding: "0 24px",
-      }}
-    >
-      {/* ===== HERO SECTION ===== */}
-      <header
-        id="hero"
-        style={{
-          textAlign: "center",
-          padding: "60px 0 40px",
-        }}
-      >
-        {/* ML badge */}
+    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 24px" }}>
+      <header id="hero" style={{ textAlign: "center", padding: "60px 0 40px" }}>
         <div
           style={{
             display: "inline-flex",
@@ -129,7 +124,6 @@ export default function HomePage() {
           Powered by Machine Learning
         </div>
 
-        {/* Title */}
         <h1
           style={{
             fontSize: "clamp(2.8rem, 7vw, 5rem)",
@@ -142,7 +136,6 @@ export default function HomePage() {
           <span className="gradient-text">AirQ Predict</span>
         </h1>
 
-        {/* Subtitle */}
         <p
           style={{
             fontSize: "1.15rem",
@@ -153,76 +146,61 @@ export default function HomePage() {
             lineHeight: 1.7,
           }}
         >
-          Enter any city to get real-time AQI data and AI-powered air quality
-          predictions for the next 5 days.
+          Enter any city to get AQI history and a 5-day forecast. Guidance is
+          informational only and not medical advice.
         </p>
       </header>
 
-      {/* ===== SEARCH BAR ===== */}
       <SearchBar onSearch={handleSearch} isLoading={isLoading} />
 
-      {/* ===== LOADING STATE ===== */}
-      {isLoading && <LoadingSpinner />}
+      <section aria-live="polite" aria-busy={isLoading}>
+        {isLoading && <LoadingSpinner />}
 
-      {/* ===== ERROR STATE ===== */}
-      {error && !isLoading && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "40px 24px",
-            animation: "fadeIn 0.3s ease",
-          }}
-        >
+        {error && !isLoading && (
           <div
-            style={{
-              width: "64px",
-              height: "64px",
-              borderRadius: "20px",
-              background: "rgba(239, 68, 68, 0.12)",
-              border: "1px solid rgba(239, 68, 68, 0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "28px",
-              margin: "0 auto 16px",
-            }}
-          >
-            ⚠️
-          </div>
-          <p
-            style={{
-              color: "#fca5a5",
-              fontSize: "0.95rem",
-              fontWeight: 500,
-              maxWidth: "400px",
-              margin: "0 auto",
-            }}
-          >
-            {error}
-          </p>
-        </div>
-      )}
-
-      {/* ===== EMPTY STATE ===== */}
-      {!data && !isLoading && !error && <EmptyState />}
-
-      {/* ===== RESULTS SECTION ===== */}
-      {data && !isLoading && (
-        <section
-          id="results"
-          style={{
-            paddingBottom: "20px",
-            animation: "fadeInUp 0.6s ease",
-          }}
-        >
-          {/* City header + Last Updated */}
-          <div
-            id="city-header"
+            role="alert"
             style={{
               textAlign: "center",
-              marginBottom: "48px",
+              padding: "40px 24px",
+              animation: "fadeIn 0.3s ease",
             }}
           >
+            <div
+              style={{
+                width: "64px",
+                height: "64px",
+                borderRadius: "20px",
+                background: "rgba(239, 68, 68, 0.12)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "28px",
+                margin: "0 auto 16px",
+              }}
+            >
+              ⚠️
+            </div>
+            <p
+              style={{
+                color: "#fca5a5",
+                fontSize: "0.95rem",
+                fontWeight: 500,
+                maxWidth: "400px",
+                margin: "0 auto",
+              }}
+            >
+              {error}
+            </p>
+          </div>
+        )}
+
+        {!data && !isLoading && !error && <EmptyState onCitySelect={handleSearch} />}
+      </section>
+
+      {data && !isLoading && latestAqi && (
+        <section id="results" style={{ paddingBottom: "20px", animation: "fadeInUp 0.6s ease" }}>
+          <div id="city-header" style={{ textAlign: "center", marginBottom: "48px" }}>
             <h2
               style={{
                 fontSize: "2rem",
@@ -244,7 +222,9 @@ export default function HomePage() {
                 gap: "16px",
               }}
             >
-              <span>{data.lat}°N, {data.lon}°E</span>
+              <span>
+                {data.lat}°N, {data.lon}°E
+              </span>
               {lastUpdated && (
                 <>
                   <span style={{ opacity: 0.3 }}>•</span>
@@ -254,36 +234,28 @@ export default function HomePage() {
                 </>
               )}
             </div>
+            <p style={{ marginTop: "8px", fontSize: "0.82rem", color: "var(--text-muted)" }}>
+              Data coverage: {Math.round(data.data_quality.coverage_ratio * 100)}% observed ({data.data_quality.observed_days}/{data.data_quality.total_days} days)
+            </p>
+            {data.data_quality.notes.length > 0 && (
+              <p style={{ marginTop: "4px", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                {data.data_quality.notes.join(" ")}
+              </p>
+            )}
           </div>
 
-          {/* City Comparison (shows if there's a previous city) */}
           <CityCompare currentData={data} previousData={previousData} />
-
-          {/* Stats row */}
           <StatsRow data={data} />
+          <AqiGauge aqi={latestAqi.aqi} category={latestAqi.category} />
 
-          {/* AQI Gauge */}
-          <AqiGauge
-            aqi={latestAqi!.aqi}
-            category={latestAqi!.category}
-          />
+          <HealthSuggestions aqi={latestAqi.aqi} category={latestAqi.category} city={data.city} />
 
-          {/* AQI Scale Legend */}
           <AqiScaleLegend />
-
-          {/* Quick Insights row */}
           <AqiMiniStats history={data.history} predictions={data.predictions} />
-
-          {/* 5-Day Forecast */}
           <ForecastGrid predictions={data.predictions} />
-
-          {/* Line chart */}
           <AqiChart history={data.history} predictions={data.predictions} fullHistory={data.full_history} />
-
-          {/* Bar chart */}
           <AqiBarChart history={data.history} predictions={data.predictions} fullHistory={data.full_history} />
 
-          {/* Doughnut + Polar charts in 2-column grid */}
           <div
             id="charts-grid"
             style={{
@@ -299,20 +271,8 @@ export default function HomePage() {
             <AqiPolarChart history={data.history} fullHistory={data.full_history} />
           </div>
 
-          {/* Health suggestions & actions */}
-          <HealthSuggestions
-            aqi={latestAqi!.aqi}
-            category={latestAqi!.category}
-            city={data.city}
-          />
-
-          {/* Model metrics */}
           <ModelMetrics metrics={data.model_metrics} />
-
-          {/* History table */}
           <HistoryTable history={data.history} />
-
-          {/* Download data */}
           <DownloadData
             city={data.city}
             country={data.country}
@@ -321,22 +281,17 @@ export default function HomePage() {
             predictions={data.predictions}
             modelMetrics={data.model_metrics}
           />
-
-          {/* Saved cities */}
           <SavedCities
             currentCity={data.city}
             currentCountry={data.country}
-            currentAqi={latestAqi!.aqi}
-            currentCategory={latestAqi!.category}
+            currentAqi={latestAqi.aqi}
+            currentCategory={latestAqi.category}
             onCityClick={handleSearch}
           />
         </section>
       )}
 
-      {/* ===== INDIA METRO CITIES ===== */}
       <MetroCities onCityClick={handleSearch} />
-
-      {/* ===== FOOTER ===== */}
       <Footer />
     </div>
   );

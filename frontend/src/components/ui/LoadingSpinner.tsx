@@ -2,14 +2,16 @@
 
 import React from "react";
 
-/**
- * Loading spinner component with animated gradient ring.
- * Used during API calls and data fetching.
- */
-export default function LoadingSpinner({ message = "Fetching AQI data & training model" }: { message?: string }) {
+export default function LoadingSpinner({
+  message = "Fetching AQI data and preparing forecast",
+}: {
+  message?: string;
+}) {
   return (
     <div
       id="loading-spinner"
+      role="status"
+      aria-live="polite"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -19,8 +21,8 @@ export default function LoadingSpinner({ message = "Fetching AQI data & training
         animation: "fadeIn 0.3s ease",
       }}
     >
-      {/* Spinning ring */}
       <div
+        aria-hidden="true"
         style={{
           width: "56px",
           height: "56px",
@@ -31,7 +33,6 @@ export default function LoadingSpinner({ message = "Fetching AQI data & training
           animation: "spin 1s linear infinite",
         }}
       />
-      {/* Loading text with animated dots */}
       <div
         style={{
           color: "var(--text-secondary)",
@@ -40,9 +41,21 @@ export default function LoadingSpinner({ message = "Fetching AQI data & training
         }}
       >
         {message}
-        <span style={{ animation: "dotPulse 1.4s infinite" }}>.</span>
-        <span style={{ animation: "dotPulse 1.4s infinite 0.2s" }}>.</span>
-        <span style={{ animation: "dotPulse 1.4s infinite 0.4s" }}>.</span>
+        <span aria-hidden="true" style={{ animation: "dotPulse 1.4s infinite" }}>
+          .
+        </span>
+        <span
+          aria-hidden="true"
+          style={{ animation: "dotPulse 1.4s infinite 0.2s" }}
+        >
+          .
+        </span>
+        <span
+          aria-hidden="true"
+          style={{ animation: "dotPulse 1.4s infinite 0.4s" }}
+        >
+          .
+        </span>
       </div>
     </div>
   );

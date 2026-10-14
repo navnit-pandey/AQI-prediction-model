@@ -2,14 +2,17 @@
 
 import React from "react";
 
-/**
- * Empty state component shown before a search is performed.
- * Displays a welcoming illustration and prompt.
- */
-export default function EmptyState() {
+export default function EmptyState({
+  onCitySelect,
+}: {
+  onCitySelect?: (city: string) => void;
+}) {
+  const suggestions = ["Delhi", "Tokyo", "London", "New York", "Sydney"];
+
   return (
-    <div
+    <section
       id="empty-state"
+      aria-label="City suggestions"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -20,7 +23,6 @@ export default function EmptyState() {
         animation: "fadeIn 0.5s ease",
       }}
     >
-      {/* Decorative icon */}
       <div
         style={{
           width: "80px",
@@ -38,7 +40,7 @@ export default function EmptyState() {
         🌤️
       </div>
       <div>
-        <h3
+        <h2
           style={{
             fontSize: "1.3rem",
             fontWeight: 700,
@@ -47,7 +49,7 @@ export default function EmptyState() {
           }}
         >
           Search for a city
-        </h3>
+        </h2>
         <p
           style={{
             color: "var(--text-secondary)",
@@ -56,12 +58,10 @@ export default function EmptyState() {
             lineHeight: 1.6,
           }}
         >
-          Enter any city name above to get real-time AQI data and AI-powered
-          5-day air quality predictions.
+          Enter a city to get recent AQI trends and a short-term forecast.
         </p>
       </div>
 
-      {/* Suggestion chips */}
       <div
         style={{
           display: "flex",
@@ -71,9 +71,11 @@ export default function EmptyState() {
           marginTop: "8px",
         }}
       >
-        {["Delhi", "Tokyo", "London", "New York", "Sydney"].map((city) => (
-          <span
+        {suggestions.map((city) => (
+          <button
+            type="button"
             key={city}
+            onClick={() => onCitySelect?.(city)}
             style={{
               padding: "6px 16px",
               borderRadius: "100px",
@@ -82,12 +84,13 @@ export default function EmptyState() {
               fontSize: "0.8rem",
               color: "var(--text-secondary)",
               fontWeight: 500,
+              cursor: "pointer",
             }}
           >
             {city}
-          </span>
+          </button>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
