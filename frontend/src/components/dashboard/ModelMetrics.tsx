@@ -38,7 +38,7 @@ export default function ModelMetrics({ metrics }: ModelMetricsProps) {
         id="metrics-row"
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "repeat(3, 1fr)",
           gap: "20px",
         }}
       >
@@ -49,10 +49,19 @@ export default function ModelMetrics({ metrics }: ModelMetricsProps) {
         />
         <MetricCard
           label="Mean Absolute Error"
-          value={metrics.mae.toString()}
+          value={metrics.mae.toFixed(2)}
           description="Average prediction error in AQI units (lower is better)"
         />
+        <MetricCard
+          label="Baseline MAE"
+          value={(metrics.baseline_mae ?? 0).toFixed(2)}
+          description="Naive persistence baseline for chronological holdout comparison"
+        />
       </div>
+      <p style={{ marginTop: "12px", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+        Validation: {metrics.validation_method ?? "chronological_holdout"} · Train/Test samples:{" "}
+        {metrics.train_samples ?? 0}/{metrics.test_samples ?? 0}
+      </p>
     </div>
   );
 }

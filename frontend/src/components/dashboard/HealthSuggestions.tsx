@@ -232,17 +232,17 @@ function getSuggestions(category: AqiCategory): SuggestionData {
         riskLevel: "Very High Risk",
         riskColor: "#a855f7",
         healthMessage:
-          "Health alert! Everyone is at serious risk. Emergency measures recommended.",
+          "Health alert level. Many people may experience stronger symptoms; reduce exposure and follow local advisories.",
         safetyTips: [
           {
             icon: "🚫",
-            title: "Do NOT Go Outside",
-            description: "Avoid all outdoor activities. This is an emergency-level situation.",
+            title: "Reduce Outdoor Exposure",
+            description: "Avoid strenuous outdoor activity and limit outdoor time where practical.",
           },
           {
             icon: "🏥",
-            title: "Seek Medical Help",
-            description: "If experiencing cough, breathlessness, or chest pain, visit a doctor immediately.",
+            title: "Monitor Symptoms",
+            description: "If you experience cough, breathlessness, or chest pain, seek professional medical advice promptly.",
           },
           {
             icon: "🌡️",
@@ -285,17 +285,17 @@ function getSuggestions(category: AqiCategory): SuggestionData {
         riskLevel: "EMERGENCY — Hazardous",
         riskColor: "#991b1b",
         healthMessage:
-          "Health emergency! Entire population is seriously affected. Avoid ALL outdoor exposure.",
+          "Hazardous air quality can affect everyone. Follow local public-health updates and minimize exposure.",
         safetyTips: [
           {
             icon: "⛔",
-            title: "STAY INDOORS",
-            description: "Absolute emergency. Do not step outside for any reason unless life-threatening.",
+            title: "Stay Indoors When Possible",
+            description: "Limit outdoor exposure and avoid heavy exertion outdoors as much as possible.",
           },
           {
             icon: "🏥",
-            title: "Emergency Medical Kit",
-            description: "Keep nebulizers, inhalers, oxygen cylinders ready. Call 108 for emergencies.",
+            title: "Prepare Essentials",
+            description: "Keep prescribed medications available and follow your clinician's care plan.",
           },
           {
             icon: "😷",
@@ -664,6 +664,18 @@ export default function HealthSuggestions({ aqi, category, city }: HealthSuggest
           </div>
         </div>
       )}
+      <p
+        style={{
+          marginTop: "14px",
+          fontSize: "0.8rem",
+          color: "var(--text-muted)",
+          lineHeight: 1.5,
+        }}
+      >
+        Disclaimer: This guidance is general informational content, not medical
+        advice. Follow local health authorities and consult a qualified
+        clinician for personal medical decisions.
+      </p>
     </div>
   );
 }

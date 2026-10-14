@@ -238,6 +238,7 @@ export default function AqiChart({ history, predictions, fullHistory }: AqiChart
   // Calculate dynamic width: ~8px per data point, minimum of container width
   const totalPoints = chartHistory.length + predictions.length;
   const chartWidth = Math.max(totalPoints * 8, 1100);
+  const estimatedDays = chartHistory.filter((point) => point.estimated).length;
 
   return (
     <div
@@ -323,6 +324,10 @@ export default function AqiChart({ history, predictions, fullHistory }: AqiChart
           padding: "32px",
         }}
       >
+        <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "10px" }}>
+          Historical trend plus forecast. Dashed line indicates forecast values;
+          {estimatedDays > 0 ? ` ${estimatedDays} day(s) use estimated historical values.` : " all history points are observed."}
+        </p>
         {/* Scrollable chart container */}
         <div
           ref={scrollContainerRef}
@@ -345,6 +350,8 @@ export default function AqiChart({ history, predictions, fullHistory }: AqiChart
             <canvas
               ref={canvasRef}
               id="aqi-chart"
+              role="img"
+              aria-label="AQI trend chart showing historical AQI and forecast AQI values over time"
               width={chartWidth}
               height={380}
             />

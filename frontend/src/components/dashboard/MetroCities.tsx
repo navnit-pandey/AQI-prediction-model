@@ -1,18 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { fetchMetroCities } from "@/lib/api";
+import { MetroCity } from "@/types";
 
-interface MetroCity {
-  name: string;
-  lat: number;
-  lon: number;
-  aqi: number | null;
-  category: string | null;
-  temp: number | null;
-  humidity: number | null;
-}
-
-/** Landmark emoji for each metro city */
 const cityIcons: Record<string, string> = {
   Ahmedabad: "🕌",
   Bangalore: "🏛️",
@@ -24,7 +15,6 @@ const cityIcons: Record<string, string> = {
   Pune: "⛰️",
 };
 
-/** Get AQI color based on value */
 function getAqiColor(aqi: number): string {
   if (aqi <= 50) return "#22c55e";
   if (aqi <= 100) return "#eab308";
@@ -34,11 +24,6 @@ function getAqiColor(aqi: number): string {
   return "#991b1b";
 }
 
-/**
- * India's Metro Cities section.
- * Displays a grid of cards showing live AQI, temperature, and humidity
- * for 8 major Indian metro cities.
- */
 export default function MetroCities({
   onCityClick,
 }: {
@@ -49,13 +34,12 @@ export default function MetroCities({
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    async function fetchMetroCities() {
+    const controller = new AbortController();
+
+    async function load() {
       try {
-        const res = await fetch("/api/metro-cities");
-        const data = await res.json();
-        if (data.cities) {
-          setCities(data.cities);
-        }
+        const data = await fetchMetroCities({ signal: controller.signal });
+        setCities(data.cities ?? []);
       } catch {
         setError(true);
       } finally {
@@ -63,22 +47,23 @@ export default function MetroCities({
       }
     }
 
-    fetchMetroCities();
+    load();
+    return () => controller.abort();
   }, []);
 
   if (error) return null;
 
   return (
-    <div
+    <section
+      aria-label="India metro AQI snapshot"
       style={{
         marginBottom: "48px",
         animation: "fadeInUp 0.6s ease 0.2s forwards",
         opacity: 0,
       }}
     >
-      {/* Section header */}
-      <div style={{ marginBottom: "8px" }}>
-        <h3
+      <header style={{ marginBottom: "8px" }}>
+        <h2
           style={{
             fontSize: "1.3rem",
             fontWeight: 700,
@@ -88,9 +73,8 @@ export default function MetroCities({
             gap: "10px",
           }}
         >
-          <span style={{ fontSize: "1.2rem" }}>🇮🇳</span> India&apos;s Metro
-          Cities
-        </h3>
+          <span style={{ fontSize: "1.2rem" }}>🇮🇳</span> India&apos;s Metro Cities
+        </h2>
         <p
           style={{
             fontSize: "0.85rem",
@@ -100,14 +84,15 @@ export default function MetroCities({
             marginBottom: "20px",
           }}
         >
-          Air Quality Index
+          Live AQI, temperature, and humidity snapshot
         </p>
-      </div>
+      </header>
 
-      {/* Loading skeleton */}
       {loading && (
         <div
           id="metro-cities-grid"
+          role="status"
+          aria-live="polite"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
@@ -115,19 +100,11 @@ export default function MetroCities({
           }}
         >
           {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="skeleton"
-              style={{
-                height: "160px",
-                borderRadius: "20px",
-              }}
-            />
+            <div key={i} className="skeleton" style={{ height: "160px", borderRadius: "20px" }} />
           ))}
         </div>
       )}
 
-      {/* City cards grid */}
       {!loading && cities.length > 0 && (
         <div
           id="metro-cities-grid"
@@ -141,8 +118,9 @@ export default function MetroCities({
             const aqiColor = city.aqi !== null ? getAqiColor(city.aqi) : "#4f8cff";
 
             return (
-              <div
+              <button
                 key={city.name}
+                type="button"
                 className="glass-card"
                 style={{
                   borderRadius: "20px",
@@ -153,18 +131,12 @@ export default function MetroCities({
                   animation: `fadeInUp 0.5s ease ${0.05 * index}s forwards`,
                   opacity: 0,
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  textAlign: "left",
                 }}
+                aria-label={`Load forecast for ${city.name}`}
                 onClick={() => onCityClick?.(city.name)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = `${aqiColor}40`;
-                  e.currentTarget.style.boxShadow = `0 8px 32px ${aqiColor}15`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--glass-border)";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
+                disabled={!onCityClick}
               >
-                {/* Top row: icon + city name + arrow */}
                 <div
                   style={{
                     display: "flex",
@@ -173,14 +145,7 @@ export default function MetroCities({
                     marginBottom: "12px",
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    {/* City landmark icon */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <div
                       style={{
                         width: "42px",
@@ -207,26 +172,11 @@ export default function MetroCities({
                     </span>
                   </div>
 
-                  {/* Arrow icon */}
                   {onCityClick && (
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--text-muted)"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ opacity: 0.5 }}
-                    >
-                      <line x1="7" y1="17" x2="17" y2="7" />
-                      <polyline points="7 7 17 7 17 17" />
-                    </svg>
+                    <span style={{ color: "var(--text-muted)", opacity: 0.7 }}>↗</span>
                   )}
                 </div>
 
-                {/* AQI value */}
                 <div
                   style={{
                     fontSize: "2rem",
@@ -240,7 +190,6 @@ export default function MetroCities({
                   {city.aqi !== null ? Math.round(city.aqi) : "—"}
                 </div>
 
-                {/* Temp & Humidity row */}
                 <div
                   style={{
                     display: "flex",
@@ -250,55 +199,27 @@ export default function MetroCities({
                   }}
                 >
                   <div>
-                    <div
-                      style={{
-                        fontWeight: 500,
-                        marginBottom: "2px",
-                        fontSize: "0.68rem",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
+                    <div style={{ fontWeight: 500, marginBottom: "2px", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                       Temp.
                     </div>
-                    <div
-                      style={{
-                        fontWeight: 700,
-                        fontSize: "0.85rem",
-                        color: "var(--text-primary)",
-                      }}
-                    >
+                    <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--text-primary)" }}>
                       {city.temp !== null ? `${city.temp}°C` : "—"}
                     </div>
                   </div>
                   <div>
-                    <div
-                      style={{
-                        fontWeight: 500,
-                        marginBottom: "2px",
-                        fontSize: "0.68rem",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
+                    <div style={{ fontWeight: 500, marginBottom: "2px", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                       Hum.
                     </div>
-                    <div
-                      style={{
-                        fontWeight: 700,
-                        fontSize: "0.85rem",
-                        color: "var(--text-primary)",
-                      }}
-                    >
+                    <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--text-primary)" }}>
                       {city.humidity !== null ? `${city.humidity}%` : "—"}
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       )}
-    </div>
+    </section>
   );
 }
