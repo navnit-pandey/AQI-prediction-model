@@ -15,25 +15,21 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
  * Persists preference to localStorage and applies data-theme attribute to <html>.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeMode>("dark");
-  const [mounted, setMounted] = useState(false);
-
-  // Load saved theme preference on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("airq-theme") as ThemeMode | null;
-    if (saved === "light" || saved === "dark") {
-      setTheme(saved);
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("airq-theme") as ThemeMode | null;
+      if (saved === "light" || saved === "dark") {
+        return saved;
+      }
     }
-    setMounted(true);
-  }, []);
+    return "dark";
+  });
 
   // Apply theme to document
   useEffect(() => {
-    if (mounted) {
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem("airq-theme", theme);
-    }
-  }, [theme, mounted]);
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("airq-theme", theme);
+  }, [theme]);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));

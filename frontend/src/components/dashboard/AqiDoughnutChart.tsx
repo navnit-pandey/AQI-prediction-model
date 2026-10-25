@@ -27,8 +27,8 @@ export default function AqiDoughnutChart({ history, fullHistory }: AqiDoughnutCh
 
     async function initChart() {
       if (!Chart) {
-        const module = await import("chart.js/auto");
-        Chart = module.default;
+        const chartModule = await import("chart.js/auto");
+        Chart = chartModule.default;
       }
       if (!mounted || !canvasRef.current || !Chart) return;
       if (chartRef.current) chartRef.current.destroy();

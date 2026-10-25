@@ -25,21 +25,21 @@ export default function SavedCities({
   currentCategory,
   onCityClick,
 }: SavedCitiesProps) {
-  const [cities, setCities] = useState<SavedCity[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const { addToast } = useToast();
-
-  // Load saved cities from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem("airq-saved-cities");
-    if (stored) {
-      try {
-        setCities(JSON.parse(stored));
-      } catch {
-        setCities([]);
+  const [cities, setCities] = useState<SavedCity[]>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("airq-saved-cities");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return [];
+        }
       }
     }
-  }, []);
+    return [];
+  });
+  const [isOpen, setIsOpen] = useState(false);
+  const { addToast } = useToast();
 
   // Persist to localStorage on changes
   useEffect(() => {

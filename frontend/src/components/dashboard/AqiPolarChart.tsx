@@ -32,8 +32,8 @@ export default function AqiPolarChart({ history, fullHistory }: AqiAreaChartProp
 
     async function initChart() {
       if (!Chart) {
-        const module = await import("chart.js/auto");
-        Chart = module.default;
+        const chartModule = await import("chart.js/auto");
+        Chart = chartModule.default;
       }
       if (!mounted || !canvasRef.current || !Chart) return;
       if (chartRef.current) chartRef.current.destroy();

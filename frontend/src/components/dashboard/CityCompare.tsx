@@ -49,7 +49,6 @@ export default function CityCompare({ currentData, previousData }: CityComparePr
   };
 
   const aqiDiff = getDiffIndicator(currentLatest.aqi, previousLatest.aqi);
-  const forecastDiff = getDiffIndicator(currentAvg, previousAvg);
 
   return (
     <div
